@@ -4,12 +4,9 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { SectionHeading } from "@/components/SectionHeading";
 import { FAQAccordion } from "@/components/FAQAccordion";
 import { CTASection } from "@/components/CTASection";
-import { ProjectCard } from "@/components/ProjectCard";
-import { projects } from "@/data/projects";
 import type { Service } from "@/data/services";
 
 export function ServicePageTemplate({ service }: { service: Service }) {
-  const related = projects.filter((project) => project.category === service.slug).slice(0, 3);
   const faq = [
     {
       question: "Como saber qual sistema é adequado?",
@@ -132,17 +129,6 @@ export function ServicePageTemplate({ service }: { service: Service }) {
           </div>
         </div>
       </section>
-
-      {related.length > 0 && (
-        <section className="section-pad">
-          <div className="container-site">
-            <SectionHeading eyebrow="Portfólio" title="Projetos relacionados" />
-            <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {related.map((project) => <ProjectCard key={project.id} project={project} />)}
-            </div>
-          </div>
-        </section>
-      )}
 
       <section className="section-pad bg-white">
         <div className="container-site">

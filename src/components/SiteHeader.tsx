@@ -22,7 +22,6 @@ export function SiteHeader() {
             {services.map((service) => <Link key={service.slug} href={"/" + service.slug} className="flex items-center gap-3 rounded-xl p-3 text-sm font-semibold hover:bg-warm"><service.icon className="size-5 text-forest" />{service.title}</Link>)}
           </div>
         </div>
-        <Link className="rounded-full px-4 py-3 text-sm font-semibold hover:bg-white" href="/projetos">Projetos</Link>
         <Link className="rounded-full px-4 py-3 text-sm font-semibold hover:bg-white" href="/sobre">Sobre</Link>
         <Link className="rounded-full px-4 py-3 text-sm font-semibold hover:bg-white" href="/contato">Contato</Link>
       </nav>
@@ -31,7 +30,7 @@ export function SiteHeader() {
     </div>
     <div id="menu-mobile" className={cn("border-t bg-white lg:hidden", open ? "block" : "hidden")}>
       <nav className="container-site grid gap-1 py-4" aria-label="Navegação móvel">
-        {[["Início","/"],["Soluções","/solucoes"],["Projetos","/projetos"],["Sobre","/sobre"],["Contato","/contato"]].map(([label, href]) => <Link key={href} onClick={() => setOpen(false)} href={href} className="rounded-xl px-4 py-3 font-semibold hover:bg-warm">{label}</Link>)}
+        {[["Início","/"],["Soluções","/solucoes"],["Sobre","/sobre"],["Contato","/contato"]].map(([label, href]) => <Link key={href} onClick={() => setOpen(false)} href={href} className="rounded-xl px-4 py-3 font-semibold hover:bg-warm">{label}</Link>)}
         <p className="px-4 pt-3 text-xs font-bold uppercase tracking-wider text-muted">Serviços</p>
         {services.map((service) => <Link key={service.slug} onClick={() => setOpen(false)} href={"/" + service.slug} className="rounded-xl px-4 py-3 text-sm font-semibold text-forest hover:bg-warm">{service.title}</Link>)}
         <Link onClick={() => setOpen(false)} href="/orcamento" className="btn-primary mt-3">Solicitar orçamento</Link>
