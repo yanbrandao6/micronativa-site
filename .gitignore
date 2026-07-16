@@ -2,5 +2,6 @@
 /.next
 /out
 *.log
+*.tsbuildinfo
 .env*
 !.env.example
