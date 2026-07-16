@@ -1,0 +1,1 @@
+export function generateTemporaryProtocol(){const year=new Date().getFullYear();let next=1;try{next=Number(localStorage.getItem("mn-protocol-sequence")??"0")+1;localStorage.setItem("mn-protocol-sequence",String(next));}catch{}return "MN-"+year+"-"+String(next).padStart(6,"0");}
