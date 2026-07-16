@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { ChevronDown, Menu, ShieldCheck, X } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { services } from "@/data/services";
 import { cn } from "@/lib/utils";
@@ -11,8 +11,8 @@ export function SiteHeader() {
     <a href="#conteudo" className="absolute -top-20 left-4 z-[60] rounded-lg bg-navy px-4 py-3 text-white focus:top-3">Pular para o conteúdo</a>
     <div className="container-site flex min-h-20 items-center justify-between gap-6">
       <Link href="/" className="flex items-center gap-3" aria-label="Micronativa — página inicial">
-        <span className="grid size-10 place-items-center rounded-xl bg-forest text-white"><ShieldCheck aria-hidden="true" /></span>
-        <span className="text-xl font-extrabold tracking-[-.04em] text-navy">micro<span className="text-forest">nativa</span></span>
+        <img src="/images/brand/micronativa-logo.jpg" alt="" aria-hidden="true" className="size-12 rounded-full border border-forest/15 bg-white object-cover shadow-sm" />
+        <span className="text-xl font-extrabold tracking-[-.025em] text-navy">MICRO<span className="text-forest">NATIVA</span></span>
       </Link>
       <nav aria-label="Navegação principal" className="hidden items-center gap-1 lg:flex">
         <Link className="rounded-full px-4 py-3 text-sm font-semibold hover:bg-white" href="/">Início</Link>

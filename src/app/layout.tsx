@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   title: { default: "Micronativa | Energia Solar, CFTV e Automação", template: "%s | Micronativa" },
   description: "Projetos e instalações de energia solar, câmeras de segurança, controle de acesso e automação de portões para residências e empresas.",
   metadataBase: new URL(company.siteUrl),
+  icons: {
+    icon: "/images/brand/micronativa-logo.jpg",
+    shortcut: "/images/brand/micronativa-logo.jpg",
+    apple: "/images/brand/micronativa-logo.jpg",
+  },
   robots: { index: true, follow: true },
 };
 

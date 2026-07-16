@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone, ShieldCheck } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { company } from "@/config/company";
 import { services } from "@/data/services";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -8,7 +8,7 @@ export function SiteFooter() {
   return <footer className="bg-[#0d2f29] text-white">
     <div className="container-site grid gap-10 py-16 md:grid-cols-2 lg:grid-cols-4">
       <div>
-        <Link href="/" className="flex items-center gap-3"><span className="grid size-10 place-items-center rounded-xl bg-solar text-navy"><ShieldCheck /></span><span className="text-xl font-extrabold">micronativa</span></Link>
+        <Link href="/" className="flex items-center gap-3" aria-label="Micronativa — página inicial"><img src="/images/brand/micronativa-logo.jpg" alt="" aria-hidden="true" className="size-14 rounded-full border border-white/20 bg-white object-cover shadow-md"/><span className="text-xl font-extrabold tracking-[-.02em]">MICRONATIVA</span></Link>
         <p className="mt-5 max-w-sm text-sm leading-6 text-white/70">Soluções integradas em energia, segurança e automação para imóveis mais eficientes, protegidos e inteligentes.</p>
         <WhatsAppButton context="home" variant="secondary" label="Chamar no WhatsApp" className="mt-6 border-white/20 bg-white/10 text-white hover:bg-white hover:text-forest" />
       </div>
