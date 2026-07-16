@@ -9,15 +9,15 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 const manrope = Manrope({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "Micronativa | Energia Solar, CFTV e Automa??o", template: "%s | Micronativa" },
-  description: "Projetos e instala??es de energia solar, c?meras de seguran?a, controle de acesso e automa??o de port?es para resid?ncias e empresas.",
+  title: { default: "Micronativa | Energia Solar, CFTV e Automação", template: "%s | Micronativa" },
+  description: "Projetos e instalações de energia solar, câmeras de segurança, controle de acesso e automação de portões para residências e empresas.",
   metadataBase: new URL(company.siteUrl),
   robots: { index: true, follow: true },
 };
 
 const localBusiness = {
   "@context": "https://schema.org", "@type": "LocalBusiness", name: company.name,
-  description: "Solu??es integradas em energia solar, seguran?a e automa??o.",
+  description: "Soluções integradas em energia solar, segurança e automação.",
   telephone: company.phoneHref, email: company.email, areaServed: company.serviceArea,
   address: { "@type": "PostalAddress", addressLocality: company.city, addressRegion: company.state, streetAddress: company.address },
 };

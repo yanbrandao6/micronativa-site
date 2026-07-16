@@ -7,7 +7,7 @@ export type AnalyticsEvent =
 type SafeMetadata = Record<string, string | number | boolean | undefined>;
 
 export function trackEvent(event: AnalyticsEvent, metadata: SafeMetadata = {}) {
-  // Ponto ?nico de integra??o com GA, GTM, Meta Pixel ou outro provedor.
+  // Ponto único de integração com GA, GTM, Meta Pixel ou outro provedor.
   // Nunca envie nomes, telefones, e-mails, mensagens ou nomes de arquivos.
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent("micronativa:analytics", { detail: { event, metadata } }));

@@ -1,6 +1,6 @@
 export type QuoteService="energia-solar"|"cftv-seguranca"|"automacao-portoes"|"controle-acesso"|"projeto-integrado"|"manutencao";
-export type PropertyType="Resid?ncia"|"Com?rcio"|"Empresa"|"Condom?nio"|"Ind?stria"|"Propriedade rural"|"Outro";
-export type ProjectPurpose="Nova instala??o"|"Amplia??o"|"Substitui??o"|"Manuten??o"|"Avalia??o t?cnica";
+export type PropertyType="Residência"|"Comércio"|"Empresa"|"Condomínio"|"Indústria"|"Propriedade rural"|"Outro";
+export type ProjectPurpose="Nova instalação"|"Ampliação"|"Substituição"|"Manutenção"|"Avaliação técnica";
 export type ContactMethod="WhatsApp"|"Telefone"|"E-mail";
 export interface QuoteAttachment {id:string;name:string;size:number;type:string;file:File}
 export interface CustomerContact {name:string;phone:string;whatsapp:string;email:string}

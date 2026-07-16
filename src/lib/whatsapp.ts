@@ -8,24 +8,24 @@ export interface WhatsAppMessageInput {
 }
 
 const contextMessages: Record<Exclude<WhatsAppContext, "project" | "quote">, string> = {
-  home: "Ol?! Acessei o site da Micronativa e gostaria de receber informa??es sobre um projeto.",
-  solar: "Ol?! Acessei a p?gina de Energia Solar da Micronativa e gostaria de solicitar uma avalia??o para meu im?vel.",
-  cftv: "Ol?! Gostaria de receber informa??es sobre instala??o de c?meras de seguran?a e monitoramento.",
-  gate: "Ol?! Gostaria de solicitar informa??es sobre automa??o ou manuten??o de port?o.",
-  access: "Ol?! Gostaria de receber informa??es sobre controle de acesso para meu im?vel.",
-  integrated: "Ol?! Gostaria de planejar um projeto integrado de energia, seguran?a e automa??o.",
-  maintenance: "Ol?! Gostaria de solicitar uma avalia??o de manuten??o.",
+  home: "Olá! Acessei o site da Micronativa e gostaria de receber informações sobre um projeto.",
+  solar: "Olá! Acessei a página de Energia Solar da Micronativa e gostaria de solicitar uma avaliação para meu imóvel.",
+  cftv: "Olá! Gostaria de receber informações sobre instalação de câmeras de segurança e monitoramento.",
+  gate: "Olá! Gostaria de solicitar informações sobre automação ou manutenção de portão.",
+  access: "Olá! Gostaria de receber informações sobre controle de acesso para meu imóvel.",
+  integrated: "Olá! Gostaria de planejar um projeto integrado de energia, segurança e automação.",
+  maintenance: "Olá! Gostaria de solicitar uma avaliação de manutenção.",
 };
 
 export function buildWhatsAppMessage(input: WhatsAppMessageInput) {
   if (input.context === "project") {
-    return "Ol?! Vi o projeto ?" + (input.projectTitle ?? "estudo de caso") + "? no site da Micronativa e gostaria de solicitar uma solu??o semelhante.";
+    return "Olá! Vi o projeto “" + (input.projectTitle ?? "estudo de caso") + "” no site da Micronativa e gostaria de solicitar uma solução semelhante.";
   }
   if (input.context === "quote") {
-    const parts = ["Ol?! Acabei de preencher uma solicita??o no site da Micronativa."];
+    const parts = ["Olá! Acabei de preencher uma solicitação no site da Micronativa."];
     if (input.protocol) parts.push("Protocolo: " + input.protocol);
-    if (input.service) parts.push("Servi?o: " + input.service.replaceAll("-", " "));
-    if (input.propertyType) parts.push("Im?vel: " + input.propertyType);
+    if (input.service) parts.push("Serviço: " + input.service.replaceAll("-", " "));
+    if (input.propertyType) parts.push("Imóvel: " + input.propertyType);
     if (input.city) parts.push("Cidade: " + input.city);
     parts.push("Gostaria de continuar o atendimento pelo WhatsApp.");
     return parts.join("\n\n");
