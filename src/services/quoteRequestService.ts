@@ -1,5 +1,20 @@
-import type {QuoteRequest} from "@/features/quote-request/types/quoteRequest";
-export async function submitQuoteRequest(request:QuoteRequest){await new Promise(resolve=>setTimeout(resolve,850));if(!request.privacyConsent)throw new Error("O consentimento é obrigatório.");return {accepted:true,storage:"mock" as const};}
-// Integração futura: substitua por REST API, Server Action ou CRM.
-// Valide novamente no servidor, adicione rate limiting, proteção antispam,
-// sanitização e upload privado antes de persistir dados ou arquivos.
+import type { QuoteRequest, QuoteSubmissionResult } from "@/features/quote-request/types/quoteRequest";
+
+export async function submitQuoteRequest(request: QuoteRequest, idempotencyKey: string): Promise<QuoteSubmissionResult> {
+  const payload = {
+    ...request,
+    attachments: undefined,
+    idempotencyKey,
+    website: request.website ?? "",
+  };
+  const body = new FormData();
+  body.set("payload", JSON.stringify(payload));
+  request.attachments.forEach((attachment) => body.append("attachments", attachment.file, attachment.name));
+
+  const response = await fetch("/api/quote-requests", { method: "POST", body, headers: { Accept: "application/json" } });
+  const result = await response.json().catch(() => null) as QuoteSubmissionResult | { error?: string } | null;
+  if (!response.ok || !result || !("accepted" in result)) {
+    throw new Error(result && "error" in result && result.error ? result.error : "Não foi possível enviar a solicitação.");
+  }
+  return result;
+}

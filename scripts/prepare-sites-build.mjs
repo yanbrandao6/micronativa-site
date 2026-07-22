@@ -1,4 +1,4 @@
-import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 const vinextEntry = "dist/server/index.js";
@@ -54,13 +54,12 @@ const notFoundResponse = await fetchHandler(new Request("http://localhost/pagina
 let notFoundBody = await notFoundResponse.text();
 notFoundBody = notFoundBody.replace("</body>", `${navigationGuard}</body>`);
 
-const workerSource = `const responses=${JSON.stringify(responses)};\nconst fallback=${JSON.stringify({
+const workerSource = `import runtime from "./server/index.js";\nconst responses=${JSON.stringify(responses)};\nconst fallback=${JSON.stringify({
   body: notFoundBody,
   contentType: "text/html; charset=utf-8",
   status: 404,
-})};\nexport default {async fetch(request){const url=new URL(request.url);const path=url.pathname!=="/"?url.pathname.replace(/\\/$/,""):"/";const item=responses[path]??fallback;const headers=new Headers({"content-type":item.contentType,"x-content-type-options":"nosniff","cache-control":item.status===200?"public, max-age=60":"no-store"});if(request.method==="HEAD")return new Response(null,{status:item.status,headers});if(request.method!=="GET")return new Response("Method Not Allowed",{status:405,headers:{allow:"GET, HEAD"}});return new Response(item.body,{status:item.status,headers})}};\n`;
+})};\nconst dynamicFetch=runtime.fetch?.bind(runtime)??runtime;\nexport default {async fetch(request,env,ctx){const url=new URL(request.url);const path=url.pathname!=="/"?url.pathname.replace(/\\/$/,""):"/";const item=responses[path];if((request.method==="GET"||request.method==="HEAD")&&item){const headers=new Headers({"content-type":item.contentType,"x-content-type-options":"nosniff","cache-control":"public, max-age=60"});return request.method==="HEAD"?new Response(null,{status:item.status,headers}):new Response(item.body,{status:item.status,headers})}return dynamicFetch(request,env,ctx)}};\n`;
 
 writeFileSync("dist/index.js", workerSource, "utf8");
-rmSync("dist/server", { recursive: true, force: true });
 mkdirSync("dist/.openai", { recursive: true });
 cpSync(".openai/hosting.json", "dist/.openai/hosting.json");

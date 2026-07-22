@@ -1,56 +1,204 @@
 "use client";
-import Link from "next/link";
-import {ArrowLeft,ArrowRight,Check,FileText,LoaderCircle,Paperclip,Trash2} from "lucide-react";
-import {useEffect,useMemo,useRef,useState} from "react";
-import {useSearchParams} from "next/navigation";
-import {serviceOptions,propertyTypes,purposes,contactMethods,acceptedTypes,MAX_FILES,MAX_FILE_SIZE} from "../data/quoteOptions";
-import type {QuoteRequest,QuoteService,QuoteAttachment} from "../types/quoteRequest";
-import {formatPhone,bytes} from "../utils/format";
-import {generateTemporaryProtocol} from "../utils/generateTemporaryProtocol";
-import {submitQuoteRequest} from "@/services/quoteRequestService";
-import {projects} from "@/data/projects";
-import {trackEvent} from "@/lib/analytics";
-import {WhatsAppButton} from "@/components/WhatsAppButton";
-import {cn} from "@/lib/utils";
 
-const initial:QuoteRequest={service:"",additionalServices:[],propertyType:"",purpose:"",city:"",state:"",projectDetails:{},attachments:[],customer:{name:"",phone:"",whatsapp:"",email:""},preferredContactMethod:"WhatsApp",privacyConsent:false,sourcePage:"direct"};
-const labels=Object.fromEntries(serviceOptions.map(x=>[x.value,x.label])) as Record<QuoteService,string>;
-const detailQuestions:Record<string,Array<{key:string;label:string;placeholder?:string}>>={
-"energia-solar":[{key:"energyBill",label:"Valor médio da conta de energia",placeholder:"Ex.: R$ 450"},{key:"electricalConnection",label:"Tipo de ligação elétrica",placeholder:"Monofásica, bifásica ou trifásica"},{key:"roofArea",label:"Área aproximada do telhado",placeholder:"Ex.: 60 m²"}],
-"cftv-seguranca":[{key:"environments",label:"Quantidade aproximada de ambientes"},{key:"internalArea",label:"Área interna a monitorar"},{key:"externalArea",label:"Área externa a monitorar"},{key:"remoteAccess",label:"Acesso pelo celular?"},{key:"recording",label:"Precisa de gravação?"}],
-"automacao-portoes":[{key:"gateType",label:"Tipo de portão"},{key:"installed",label:"O portão já está instalado?"},{key:"hasMotor",label:"Possui motor atualmente?"},{key:"problem",label:"Problema atual, se houver"}],
-"controle-acesso":[{key:"accessCount",label:"Quantidade aproximada de acessos"},{key:"accessType",label:"Tecnologia desejada",placeholder:"Tags, biometria, senha..."},{key:"usage",label:"Tipo de uso"}],
-"projeto-integrado":[{key:"priorities",label:"Quais são as prioridades do projeto?"},{key:"infrastructure",label:"Há infraestrutura instalada?"},{key:"phase",label:"Deseja executar por etapas?"}],
-"manutencao":[{key:"system",label:"Qual sistema precisa de manutenção?"},{key:"problem",label:"Descreva o problema observado"},{key:"since",label:"Quando o problema começou?"}]
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { ArrowLeft, ArrowRight, Check, FileText, LoaderCircle, Paperclip, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { SelectField } from "@/components/forms/SelectField";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { projects } from "@/data/projects";
+import { trackEvent } from "@/lib/analytics";
+import { cn } from "@/lib/utils";
+import { MAX_ATTACHMENT_FILES, validateAttachment } from "@/lib/validation/quoteRequest";
+import { submitQuoteRequest } from "@/services/quoteRequestService";
+import { contactMethods, propertyTypes, purposes, serviceOptions } from "../data/quoteOptions";
+import type { QuoteAttachment, QuoteRequest, QuoteService, QuoteSubmissionResult } from "../types/quoteRequest";
+import { bytes, formatPhone } from "../utils/format";
+
+type DetailQuestion = { key: string; label: string; placeholder?: string; options?: string[] };
+
+const initial: QuoteRequest = {
+  service: "",
+  additionalServices: [],
+  propertyType: "",
+  purpose: "",
+  city: "",
+  state: "PR",
+  projectDetails: {},
+  attachments: [],
+  customer: { name: "", phone: "", whatsapp: "", email: "" },
+  preferredContactMethod: "WhatsApp",
+  privacyConsent: false,
+  sourcePage: "direct",
+  website: "",
 };
-function fieldClass(error?:string){return cn("input",error&&"border-red-500");}
-export function QuoteRequestWizard(){
- const params=useSearchParams();const heading=useRef<HTMLHeadingElement>(null);
- const [step,setStep]=useState(1);const [data,setData]=useState<QuoteRequest>(initial);const [errors,setErrors]=useState<Record<string,string>>({});const [status,setStatus]=useState<"idle"|"loading"|"success"|"error">("idle");const [protocol,setProtocol]=useState("");
- const validService=serviceOptions.some(x=>x.value===params.get("service"))?params.get("service") as QuoteService:"";
- const project=projects.find(p=>p.slug===params.get("project")||p.id===params.get("project"));
- useEffect(()=>{setData(old=>({...old,service:old.service||validService,projectReference:project?.id,sourcePage:["home","service","project","solutions"].includes(params.get("source")??"")?params.get("source")!:"direct"}));trackEvent("quote_form_started",{source:params.get("source")??"direct",service:validService||undefined,projectId:project?.id});},[]);
- useEffect(()=>{heading.current?.focus();setErrors({});},[step]);
- useEffect(()=>{try{const safe={...data,attachments:[]};sessionStorage.setItem("mn-quote-draft",JSON.stringify(safe));}catch{}},[data]);
- const set=<K extends keyof QuoteRequest>(key:K,value:QuoteRequest[K])=>setData(old=>({...old,[key]:value}));
- const customer=(key:keyof QuoteRequest["customer"],value:string)=>setData(old=>({...old,customer:{...old.customer,[key]:value}}));
- const validate=()=>{const e:Record<string,string>={};if(step===1&&!data.service)e.service="Selecione uma solução.";if(step===1&&data.service==="projeto-integrado"&&!data.additionalServices.length)e.additional="Selecione ao menos um serviço para integrar.";if(step===2){if(!data.propertyType)e.propertyType="Selecione o tipo de imóvel.";if(!data.purpose)e.purpose="Selecione a finalidade.";if(data.city.trim().length<2)e.city="Informe a cidade.";if(!/^[A-Za-z]{2}$/.test(data.state))e.state="Use a sigla do estado com 2 letras.";}if(step===5){if(data.customer.name.trim().length<3)e.name="Informe seu nome.";if(data.customer.phone.replace(/\D/g,"").length<10)e.phone="Informe um telefone válido.";if(!/^\S+@\S+\.\S+$/.test(data.customer.email))e.email="Informe um e-mail válido.";if(!data.privacyConsent)e.consent="O consentimento é obrigatório.";}setErrors(e);return !Object.keys(e).length;};
- const next=()=>{if(!validate())return;trackEvent("quote_form_step_completed",{step,service:data.service,source:data.sourcePage});setStep(s=>Math.min(6,s+1));};
- const addFiles=(list:FileList|null)=>{if(!list)return;const nextFiles:QuoteAttachment[]=[];let message="";for(const file of Array.from(list)){if(!acceptedTypes.includes(file.type)){message="Use somente JPG, PNG, WEBP ou PDF.";continue;}if(file.size>MAX_FILE_SIZE){message="Cada arquivo deve ter no máximo 8 MB.";continue;}if(data.attachments.length+nextFiles.length>=MAX_FILES){message="Você pode enviar até 6 arquivos.";break;}nextFiles.push({id:crypto.randomUUID(),name:file.name,size:file.size,type:file.type,file});}if(message)setErrors({files:message});set("attachments",[...data.attachments,...nextFiles]);};
- const submit=async()=>{setStatus("loading");try{await submitQuoteRequest(data);const p=generateTemporaryProtocol();setProtocol(p);setStatus("success");trackEvent("quote_form_submitted",{service:data.service,source:data.sourcePage,projectId:data.projectReference,completionStatus:true});sessionStorage.removeItem("mn-quote-draft");}catch{setStatus("error");}};
- const q=useMemo(()=>detailQuestions[data.service||"manutencao"],[data.service]);
- if(status==="success")return <div className="mx-auto max-w-2xl rounded-4xl border bg-white p-7 text-center shadow-soft sm:p-12"><span className="mx-auto grid size-16 place-items-center rounded-full bg-forest-pale text-forest"><Check className="size-8"/></span><h1 className="mt-6 text-3xl font-bold">Solicitação enviada com sucesso</h1><p className="mt-4 leading-7 text-muted">Recebemos suas informações no adaptador demonstrativo. Conecte o formulário a um backend antes de captar solicitações reais.</p><div className="mx-auto mt-6 max-w-sm rounded-2xl bg-warm p-5"><p className="text-xs font-bold uppercase tracking-wider text-muted">Protocolo temporário</p><p className="mt-2 text-2xl font-extrabold text-navy">{protocol}</p></div><div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row"><WhatsAppButton context="quote" protocol={protocol} service={data.service||undefined} propertyType={data.propertyType||undefined} city={data.city+" - "+data.state} label="Enviar resumo pelo WhatsApp"/><Link href="/" className="btn-secondary">Voltar para o início</Link></div></div>;
- return <div className="mx-auto max-w-4xl">
-  {project&&<div className="mb-5 rounded-2xl border border-forest/20 bg-forest-pale p-4 text-sm"><strong>Projeto de referência:</strong> {project.title}<button className="ml-3 underline" onClick={()=>set("projectReference",undefined)}>Remover referência</button></div>}
-  <div className="mb-6"><div className="flex items-center justify-between text-sm font-bold"><span>Etapa {step} de 6</span><span className="text-muted">{["Solução","Imóvel","Detalhes","Anexos","Contato","Revisão"][step-1]}</span></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-navy-pale"><div className="h-full bg-forest transition-all" style={{width:(step/6*100)+"%"}}/></div></div>
-  <div className="rounded-4xl border bg-white p-5 shadow-soft sm:p-9" aria-live="polite">
-   {step===1&&<section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold">Qual solução você procura?</h1><p className="mt-2 text-muted">Escolha a necessidade principal para personalizarmos as próximas perguntas.</p><div className="mt-7 grid gap-3 sm:grid-cols-2">{serviceOptions.map(o=><button key={o.value} type="button" aria-pressed={data.service===o.value} onClick={()=>set("service",o.value)} className={cn("min-h-28 rounded-2xl border p-5 text-left transition",data.service===o.value?"border-forest bg-forest-pale ring-2 ring-forest/15":"hover:border-forest/40")}><o.icon className="size-6 text-forest"/><span className="mt-4 block font-bold">{o.label}</span><span className="mt-1 block text-sm text-muted">{o.description}</span></button>)}</div>{errors.service&&<p role="alert" className="mt-3 text-sm font-semibold text-red-700">{errors.service}</p>}{data.service==="projeto-integrado"&&<div className="mt-6"><p className="font-bold">Quais serviços deseja combinar?</p><div className="mt-3 flex flex-wrap gap-2">{serviceOptions.slice(0,4).map(o=><button key={o.value} type="button" aria-pressed={data.additionalServices.includes(o.value)} onClick={()=>set("additionalServices",data.additionalServices.includes(o.value)?data.additionalServices.filter(x=>x!==o.value):[...data.additionalServices,o.value])} className={cn("min-h-11 rounded-full border px-4 py-2 text-sm font-bold",data.additionalServices.includes(o.value)&&"border-forest bg-forest text-white")}>{o.label}</button>)}</div>{errors.additional&&<p role="alert" className="mt-2 text-sm text-red-700">{errors.additional}</p>}</div>}</section>}
-   {step===2&&<section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold">Conte um pouco sobre o imóvel</h1><div className="mt-7 grid gap-5 sm:grid-cols-2"><label className="font-bold">Tipo de imóvel<select value={data.propertyType} onChange={e=>set("propertyType",e.target.value as any)} className={fieldClass(errors.propertyType)}><option value="">Selecione</option>{propertyTypes.map(x=><option key={x}>{x}</option>)}</select>{errors.propertyType&&<span className="mt-1 block text-sm text-red-700">{errors.propertyType}</span>}</label><label className="font-bold">Finalidade<select value={data.purpose} onChange={e=>set("purpose",e.target.value as any)} className={fieldClass(errors.purpose)}><option value="">Selecione</option>{purposes.map(x=><option key={x}>{x}</option>)}</select>{errors.purpose&&<span className="mt-1 block text-sm text-red-700">{errors.purpose}</span>}</label><label className="font-bold">Cidade<input className={fieldClass(errors.city)} value={data.city} onChange={e=>set("city",e.target.value)} autoComplete="address-level2"/>{errors.city&&<span className="mt-1 block text-sm text-red-700">{errors.city}</span>}</label><label className="font-bold">Estado<input className={fieldClass(errors.state)} value={data.state} maxLength={2} onChange={e=>set("state",e.target.value.toUpperCase().replace(/[^A-Z]/g,""))} placeholder="UF" autoComplete="address-level1"/>{errors.state&&<span className="mt-1 block text-sm text-red-700">{errors.state}</span>}</label></div></section>}
-   {step===3&&<section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold">Quais são as necessidades do projeto?</h1><p className="mt-2 text-muted">Responda o que souber. A equipe confirma os detalhes no levantamento técnico.</p><div className="mt-7 grid gap-5 sm:grid-cols-2">{q.map(item=><label key={item.key} className="font-bold">{item.label}<input className="input" placeholder={item.placeholder} value={String(data.projectDetails[item.key]??"")} onChange={e=>set("projectDetails",{...data.projectDetails,[item.key]:e.target.value})}/></label>)}<label className="font-bold sm:col-span-2">Observações<textarea className="input min-h-32 resize-y" value={String(data.projectDetails.notes??"")} onChange={e=>set("projectDetails",{...data.projectDetails,notes:e.target.value})}/></label></div></section>}
-   {step===4&&<section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold">Deseja enviar imagens ou documentos?</h1><p className="mt-2 text-muted">Opcional. Até 6 arquivos JPG, PNG, WEBP ou PDF, com no máximo 8 MB cada. Os arquivos não são enviados sem backend.</p><label className="mt-7 flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-navy/20 bg-warm p-6 text-center hover:border-forest"><Paperclip className="size-8 text-forest"/><span className="mt-3 font-bold">Selecionar arquivos</span><input type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf" className="sr-only" onChange={e=>addFiles(e.target.files)}/></label>{errors.files&&<p role="alert" className="mt-3 text-sm text-red-700">{errors.files}</p>}<ul className="mt-5 space-y-2">{data.attachments.map(file=><li key={file.id} className="flex items-center gap-3 rounded-2xl border p-4"><FileText className="size-5 text-forest"/><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{file.name}</strong><span className="text-xs text-muted">{bytes(file.size)} • aguardando integração</span></span><button type="button" onClick={()=>set("attachments",data.attachments.filter(x=>x.id!==file.id))} className="grid size-11 place-items-center rounded-full hover:bg-red-50" aria-label={"Remover "+file.name}><Trash2 className="size-5"/></button></li>)}</ul></section>}
-   {step===5&&<section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold">Como podemos entrar em contato?</h1><div className="mt-7 grid gap-5 sm:grid-cols-2"><label className="font-bold">Nome<input className={fieldClass(errors.name)} value={data.customer.name} onChange={e=>customer("name",e.target.value)} autoComplete="name"/></label><label className="font-bold">Telefone<input type="tel" inputMode="tel" className={fieldClass(errors.phone)} value={data.customer.phone} onChange={e=>customer("phone",formatPhone(e.target.value))} autoComplete="tel"/></label><label className="font-bold">WhatsApp<input type="tel" inputMode="tel" className="input" value={data.customer.whatsapp} onChange={e=>customer("whatsapp",formatPhone(e.target.value))} autoComplete="tel"/></label><label className="font-bold">E-mail<input type="email" className={fieldClass(errors.email)} value={data.customer.email} onChange={e=>customer("email",e.target.value)} autoComplete="email"/></label></div><fieldset className="mt-6"><legend className="font-bold">Forma de contato preferida</legend><div className="mt-3 flex flex-wrap gap-2">{contactMethods.map(x=><label key={x} className={cn("flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-4",data.preferredContactMethod===x&&"border-forest bg-forest-pale")}><input type="radio" name="contact" checked={data.preferredContactMethod===x} onChange={()=>set("preferredContactMethod",x)}/>{x}</label>)}</div></fieldset><label className="mt-7 flex items-start gap-3 rounded-2xl bg-warm p-4"><input type="checkbox" checked={data.privacyConsent} onChange={e=>set("privacyConsent",e.target.checked)} className="mt-1 size-5"/><span className="text-sm leading-6">Autorizo o uso dos meus dados para atendimento desta solicitação, conforme a <Link href="/politica-de-privacidade" className="font-bold text-forest underline">Política de Privacidade</Link>.</span></label>{errors.consent&&<p role="alert" className="mt-2 text-sm text-red-700">{errors.consent}</p>}</section>}
-   {step===6&&<section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold">Revise sua solicitação</h1><p className="mt-2 text-muted">Você pode voltar a qualquer etapa sem perder os dados.</p><div className="mt-7 grid gap-4 md:grid-cols-2">{[["Solução",data.service?labels[data.service]:"—",1],["Imóvel",data.propertyType+" • "+data.purpose,2],["Local",data.city+" — "+data.state,2],["Detalhes",Object.values(data.projectDetails).filter(Boolean).join(" • ")||"Sem detalhes adicionais",3],["Anexos",data.attachments.length+" arquivo(s)",4],["Contato",data.customer.name+" • "+data.preferredContactMethod,5]].map(([t,v,s])=><div key={t as string} className="rounded-2xl bg-warm p-5"><div className="flex items-center justify-between"><h2 className="font-bold">{t as string}</h2><button type="button" className="text-sm font-bold text-forest underline" onClick={()=>setStep(s as number)}>Editar</button></div><p className="mt-2 break-words text-sm leading-6 text-muted">{v as string}</p></div>)}</div>{status==="error"&&<p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm font-bold text-red-700">Não foi possível enviar. Revise os dados e tente novamente.</p>}<div className="mt-6 rounded-2xl border border-solar/50 bg-solar/10 p-4 text-sm leading-6"><strong>Importante:</strong> nesta versão, o envio usa um adaptador demonstrativo e não armazena dados permanentemente. Conecte um backend antes da captação real.</div></section>}
-   <div className="mt-9 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:justify-between">{step>1?<button type="button" onClick={()=>setStep(s=>s-1)} className="btn-secondary"><ArrowLeft className="size-4"/>Voltar</button>:<span/>}{step<6?<button type="button" onClick={next} className="btn-primary">Continuar <ArrowRight className="size-4"/></button>:<button type="button" onClick={submit} disabled={status==="loading"} className="btn-primary disabled:opacity-60">{status==="loading"?<><LoaderCircle className="size-4 animate-spin"/>Enviando</>:<>Enviar solicitação <ArrowRight className="size-4"/></>}</button>}</div>
-  </div>
- </div>;
+
+const labels = Object.fromEntries(serviceOptions.map((option) => [option.value, option.label])) as Record<QuoteService, string>;
+const detailQuestions: Record<QuoteService, DetailQuestion[]> = {
+  "energia-solar": [
+    { key: "energyBill", label: "Valor médio da conta de energia", placeholder: "Ex.: R$ 450" },
+    { key: "electricalConnection", label: "Tipo de ligação elétrica", options: ["Não sei", "Monofásica", "Bifásica", "Trifásica"] },
+    { key: "roofArea", label: "Área aproximada do telhado", placeholder: "Ex.: 60 m²" },
+  ],
+  "cftv-seguranca": [
+    { key: "environments", label: "Quantidade aproximada de ambientes" },
+    { key: "internalArea", label: "Área interna a monitorar" },
+    { key: "externalArea", label: "Área externa a monitorar" },
+    { key: "remoteAccess", label: "Acesso pelo celular?", options: ["Sim", "Não", "Ainda não sei"] },
+    { key: "recording", label: "Precisa de gravação?", options: ["Sim", "Não", "Ainda não sei"] },
+  ],
+  "automacao-portoes": [
+    { key: "gateType", label: "Tipo de portão", options: ["Deslizante", "Basculante", "Pivotante", "Outro", "Não sei"] },
+    { key: "installed", label: "O portão já está instalado?", options: ["Sim", "Não"] },
+    { key: "hasMotor", label: "Possui motor atualmente?", options: ["Sim", "Não", "Não sei"] },
+    { key: "problem", label: "Problema atual, se houver" },
+  ],
+  "controle-acesso": [
+    { key: "accessCount", label: "Quantidade aproximada de acessos" },
+    { key: "accessType", label: "Tecnologia desejada", options: ["Tag ou cartão", "Senha", "Biometria", "Reconhecimento facial", "Fechadura eletrônica", "Vídeo porteiro", "Ainda não sei"] },
+    { key: "usage", label: "Tipo de uso" },
+  ],
+  "projeto-integrado": [
+    { key: "priorities", label: "Quais são as prioridades do projeto?" },
+    { key: "infrastructure", label: "Há infraestrutura instalada?", options: ["Sim", "Não", "Parcialmente", "Não sei"] },
+    { key: "phase", label: "Deseja executar por etapas?", options: ["Sim", "Não", "Ainda não sei"] },
+  ],
+  manutencao: [
+    { key: "system", label: "Qual sistema precisa de manutenção?" },
+    { key: "problem", label: "Descreva o problema observado" },
+    { key: "since", label: "Quando o problema começou?" },
+  ],
+};
+
+function fieldClass(error?: string) {
+  return cn("input", error && "border-red-500");
+}
+
+export function QuoteRequestWizard() {
+  const params = useSearchParams();
+  const heading = useRef<HTMLHeadingElement>(null);
+  const [step, setStep] = useState(1);
+  const [data, setData] = useState<QuoteRequest>(initial);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [submitError, setSubmitError] = useState("");
+  const [result, setResult] = useState<QuoteSubmissionResult | null>(null);
+  const [idempotencyKey, setIdempotencyKey] = useState("");
+
+  const validService = serviceOptions.some((option) => option.value === params.get("service")) ? params.get("service") as QuoteService : "";
+  const project = projects.find((item) => item.slug === params.get("project") || item.id === params.get("project"));
+
+  useEffect(() => {
+    const storedKey = sessionStorage.getItem("mn-quote-idempotency") ?? crypto.randomUUID();
+    sessionStorage.setItem("mn-quote-idempotency", storedKey);
+    setIdempotencyKey(storedKey);
+    setData((old) => ({
+      ...old,
+      service: old.service || validService,
+      projectReference: project?.id,
+      sourcePage: ["home", "service", "project", "solutions", "contact"].includes(params.get("source") ?? "") ? params.get("source")! : "direct",
+    }));
+    trackEvent("quote_form_started", { source: params.get("source") ?? "direct", service: validService || undefined, projectId: project?.id });
+  }, []);
+
+  useEffect(() => { heading.current?.focus(); setErrors({}); }, [step]);
+  useEffect(() => {
+    try { sessionStorage.setItem("mn-quote-draft", JSON.stringify({ ...data, attachments: [] })); } catch { /* Storage may be unavailable. */ }
+  }, [data]);
+
+  const set = <K extends keyof QuoteRequest>(key: K, value: QuoteRequest[K]) => setData((old) => ({ ...old, [key]: value }));
+  const customer = (key: keyof QuoteRequest["customer"], value: string) => setData((old) => ({ ...old, customer: { ...old.customer, [key]: value } }));
+
+  function validate() {
+    const nextErrors: Record<string, string> = {};
+    if (step === 1 && !data.service) nextErrors.service = "Selecione uma solução.";
+    if (step === 1 && data.service === "projeto-integrado" && !data.additionalServices.length) nextErrors.additional = "Selecione ao menos um serviço para integrar.";
+    if (step === 2) {
+      if (!data.propertyType) nextErrors.propertyType = "Selecione o tipo de imóvel.";
+      if (!data.purpose) nextErrors.purpose = "Selecione a finalidade.";
+      if (data.city.trim().length < 2) nextErrors.city = "Informe a cidade.";
+    }
+    if (step === 5) {
+      if (data.customer.name.trim().length < 3) nextErrors.name = "Informe seu nome.";
+      if (data.customer.phone.replace(/\D/g, "").length < 10) nextErrors.phone = "Informe um telefone válido.";
+      if (!/^\S+@\S+\.\S+$/.test(data.customer.email)) nextErrors.email = "Informe um e-mail válido.";
+      if (!data.privacyConsent) nextErrors.consent = "O consentimento é obrigatório.";
+    }
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
+
+  function next() {
+    if (!validate()) return;
+    trackEvent("quote_form_step_completed", { step, service: data.service, source: data.sourcePage });
+    setStep((current) => Math.min(6, current + 1));
+  }
+
+  function addFiles(list: FileList | null) {
+    if (!list) return;
+    const nextFiles: QuoteAttachment[] = [];
+    let message = "";
+    for (const file of Array.from(list)) {
+      const validation = validateAttachment(file);
+      if (!validation.valid) { message = validation.error; continue; }
+      if (data.attachments.length + nextFiles.length >= MAX_ATTACHMENT_FILES) { message = "Você pode enviar até 6 arquivos."; break; }
+      nextFiles.push({ id: crypto.randomUUID(), name: file.name, size: file.size, type: file.type, file });
+    }
+    setErrors((current) => ({ ...current, files: message }));
+    set("attachments", [...data.attachments, ...nextFiles]);
+  }
+
+  async function submit() {
+    if (status === "loading" || !idempotencyKey) return;
+    setStatus("loading");
+    setSubmitError("");
+    try {
+      const submitted = await submitQuoteRequest(data, idempotencyKey);
+      setResult(submitted);
+      setStatus("success");
+      trackEvent("quote_form_submitted", { service: data.service, source: data.sourcePage, projectId: data.projectReference, completionStatus: true });
+      sessionStorage.removeItem("mn-quote-draft");
+      sessionStorage.removeItem("mn-quote-idempotency");
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Não foi possível enviar. Tente novamente.");
+      setStatus("error");
+    }
+  }
+
+  const questions = useMemo(() => data.service ? detailQuestions[data.service] : [], [data.service]);
+
+  if (status === "success" && result) return <div className="mx-auto max-w-3xl rounded-4xl border bg-white p-7 text-center shadow-soft sm:p-12" aria-live="polite">
+    <span className="mx-auto grid size-16 place-items-center rounded-full bg-forest-pale text-forest"><Check className="size-8" /></span>
+    <h1 ref={heading} tabIndex={-1} className="mt-6 text-3xl font-bold focus:outline-none">Solicitação enviada com sucesso</h1>
+    <p className="mx-auto mt-4 max-w-xl leading-7 text-muted">Recebemos suas informações. Guarde o protocolo abaixo para acompanhar o andamento da solicitação.</p>
+    <div className="mx-auto mt-7 max-w-lg rounded-3xl bg-warm p-6">
+      <p className="text-xs font-bold uppercase tracking-wider text-muted">Protocolo</p><p className="mt-2 break-all text-2xl font-extrabold text-navy sm:text-3xl">{result.protocol}</p>
+      <dl className="mt-5 grid gap-3 text-left text-sm sm:grid-cols-2"><div><dt className="font-bold text-muted">Enviado em</dt><dd className="mt-1">{new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(result.createdAt))}</dd></div><div><dt className="font-bold text-muted">Serviço</dt><dd className="mt-1">{labels[result.service]}</dd></div></dl>
+    </div>
+    <div className="mt-8 grid gap-3 sm:grid-cols-3">
+      <Link href={`/consultar-protocolo?protocolo=${encodeURIComponent(result.protocol)}`} className="btn-primary">Acompanhar solicitação</Link>
+      <WhatsAppButton context="quote" protocol={result.protocol} service={result.service} propertyType={data.propertyType || undefined} city={`${data.city} - PR`} label="Continuar no WhatsApp" variant="secondary" />
+      <Link href="/" className="btn-secondary">Voltar para o início</Link>
+    </div>
+  </div>;
+
+  return <div className="mx-auto max-w-4xl">
+    {project && <div className="mb-5 rounded-2xl border border-forest/20 bg-forest-pale p-4 text-sm"><strong>Projeto de referência:</strong> {project.title}<button type="button" className="ml-3 underline" onClick={() => set("projectReference", undefined)}>Remover referência</button></div>}
+    <div className="mb-6"><div className="flex items-center justify-between text-sm font-bold"><span>Etapa {step} de 6</span><span className="text-muted">{["Solução", "Imóvel", "Detalhes", "Anexos", "Contato", "Revisão"][step - 1]}</span></div><div className="mt-3 h-2 overflow-hidden rounded-full bg-navy-pale"><div className="h-full bg-forest transition-all" style={{ width: `${step / 6 * 100}%` }} /></div></div>
+    <div className="rounded-4xl border bg-white p-5 shadow-soft sm:p-9" aria-live="polite">
+      {step === 1 && <section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold focus:outline-none">Qual solução você procura?</h1><p className="mt-2 text-muted">Escolha a necessidade principal para personalizarmos as próximas perguntas.</p><div className="mt-7 grid gap-3 sm:grid-cols-2">{serviceOptions.map((option) => <button key={option.value} type="button" aria-pressed={data.service === option.value} onClick={() => set("service", option.value)} className={cn("min-h-28 rounded-2xl border p-5 text-left transition", data.service === option.value ? "border-forest bg-forest-pale ring-2 ring-forest/15" : "hover:border-forest/40")}><option.icon className="size-6 text-forest" /><span className="mt-4 block font-bold">{option.label}</span><span className="mt-1 block text-sm text-muted">{option.description}</span></button>)}</div>{errors.service && <p role="alert" className="mt-3 text-sm font-semibold text-red-700">{errors.service}</p>}{data.service === "projeto-integrado" && <div className="mt-6"><p className="font-bold">Quais serviços deseja combinar?</p><div className="mt-3 flex flex-wrap gap-2">{serviceOptions.slice(0, 4).map((option) => <button key={option.value} type="button" aria-pressed={data.additionalServices.includes(option.value)} onClick={() => set("additionalServices", data.additionalServices.includes(option.value) ? data.additionalServices.filter((value) => value !== option.value) : [...data.additionalServices, option.value])} className={cn("min-h-11 rounded-full border px-4 py-2 text-sm font-bold", data.additionalServices.includes(option.value) && "border-forest bg-forest text-white")}>{option.label}</button>)}</div>{errors.additional && <p role="alert" className="mt-2 text-sm text-red-700">{errors.additional}</p>}</div>}</section>}
+
+      {step === 2 && <section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold focus:outline-none">Conte um pouco sobre o imóvel</h1><div className="mt-7 grid gap-5 sm:grid-cols-2"><SelectField id="property-type" label="Tipo de imóvel" value={data.propertyType} onValueChange={(value) => set("propertyType", value as QuoteRequest["propertyType"])} options={propertyTypes.map((value) => ({ value, label: value }))} error={errors.propertyType} /><SelectField id="project-purpose" label="Finalidade" value={data.purpose} onValueChange={(value) => set("purpose", value as QuoteRequest["purpose"])} options={purposes.map((value) => ({ value, label: value }))} error={errors.purpose} /><label className="font-bold">Cidade<input className={fieldClass(errors.city)} value={data.city} onChange={(event) => set("city", event.target.value)} autoComplete="address-level2" />{errors.city && <span className="mt-1 block text-sm text-red-700">{errors.city}</span>}</label><div><p className="font-bold">Estado</p><div className="mt-2 flex min-h-[52px] items-center rounded-2xl border border-forest/30 bg-forest-pale px-4 font-bold text-forest-dark">Paraná (PR)</div><p className="mt-2 text-sm text-muted">Atendimento em todo o estado do Paraná.</p></div></div></section>}
+
+      {step === 3 && <section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold focus:outline-none">Quais são as necessidades do projeto?</h1><p className="mt-2 text-muted">Responda o que souber. A equipe confirma os detalhes no levantamento técnico.</p><div className="mt-7 grid gap-5 sm:grid-cols-2">{questions.map((item) => item.options ? <SelectField key={item.key} id={`detail-${item.key}`} label={item.label} value={String(data.projectDetails[item.key] ?? "")} onValueChange={(value) => set("projectDetails", { ...data.projectDetails, [item.key]: value })} options={item.options.map((value) => ({ value, label: value }))} /> : <label key={item.key} className="font-bold">{item.label}<input className="input" placeholder={item.placeholder} value={String(data.projectDetails[item.key] ?? "")} onChange={(event) => set("projectDetails", { ...data.projectDetails, [item.key]: event.target.value })} /></label>)}<label className="font-bold sm:col-span-2">Observações<textarea className="input min-h-32 resize-y" maxLength={2000} value={String(data.projectDetails.notes ?? "")} onChange={(event) => set("projectDetails", { ...data.projectDetails, notes: event.target.value })} /></label></div></section>}
+
+      {step === 4 && <section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold focus:outline-none">Deseja enviar imagens ou documentos?</h1><p className="mt-2 text-muted">Opcional. Até 6 arquivos JPG, JPEG, PNG, WEBP ou PDF, com no máximo 8 MB cada. Os arquivos são guardados em armazenamento privado.</p><label className="mt-7 flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-navy/20 bg-warm p-6 text-center hover:border-forest"><Paperclip className="size-8 text-forest" /><span className="mt-3 font-bold">Selecionar arquivos</span><input type="file" multiple accept=".jpg,.jpeg,.png,.webp,.pdf" className="sr-only" onChange={(event) => addFiles(event.target.files)} /></label>{errors.files && <p role="alert" className="mt-3 text-sm text-red-700">{errors.files}</p>}<ul className="mt-5 space-y-2">{data.attachments.map((file) => <li key={file.id} className="flex items-center gap-3 rounded-2xl border p-4"><FileText className="size-5 text-forest" /><span className="min-w-0 flex-1"><strong className="block truncate text-sm">{file.name}</strong><span className="text-xs text-muted">{bytes(file.size)} • pronto para envio privado</span></span><button type="button" onClick={() => set("attachments", data.attachments.filter((item) => item.id !== file.id))} className="grid size-11 place-items-center rounded-full hover:bg-red-50" aria-label={`Remover ${file.name}`}><Trash2 className="size-5" /></button></li>)}</ul></section>}
+
+      {step === 5 && <section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold focus:outline-none">Como podemos entrar em contato?</h1><div className="mt-7 grid gap-5 sm:grid-cols-2"><label className="font-bold">Nome<input className={fieldClass(errors.name)} maxLength={160} value={data.customer.name} onChange={(event) => customer("name", event.target.value)} autoComplete="name" />{errors.name && <span className="mt-1 block text-sm text-red-700">{errors.name}</span>}</label><label className="font-bold">Telefone<input type="tel" inputMode="tel" className={fieldClass(errors.phone)} value={data.customer.phone} onChange={(event) => customer("phone", formatPhone(event.target.value))} autoComplete="tel" />{errors.phone && <span className="mt-1 block text-sm text-red-700">{errors.phone}</span>}</label><label className="font-bold">WhatsApp<input type="tel" inputMode="tel" className="input" value={data.customer.whatsapp} onChange={(event) => customer("whatsapp", formatPhone(event.target.value))} autoComplete="tel" /></label><label className="font-bold">E-mail<input type="email" inputMode="email" className={fieldClass(errors.email)} maxLength={254} value={data.customer.email} onChange={(event) => customer("email", event.target.value)} autoComplete="email" />{errors.email && <span className="mt-1 block text-sm text-red-700">{errors.email}</span>}</label></div><SelectField id="preferred-contact" className="mt-6" label="Forma de contato preferida" value={data.preferredContactMethod} onValueChange={(value) => set("preferredContactMethod", value as QuoteRequest["preferredContactMethod"])} options={contactMethods.map((value) => ({ value, label: value }))} /><label className="mt-7 flex items-start gap-3 rounded-2xl bg-warm p-4"><input type="checkbox" checked={data.privacyConsent} onChange={(event) => set("privacyConsent", event.target.checked)} className="mt-1 size-5" /><span className="text-sm leading-6">Autorizo o uso dos meus dados para atendimento desta solicitação, conforme a <Link href="/politica-de-privacidade" className="font-bold text-forest underline">Política de Privacidade</Link>.</span></label>{errors.consent && <p role="alert" className="mt-2 text-sm text-red-700">{errors.consent}</p>}<label className="absolute -left-[10000px] top-auto size-px overflow-hidden" aria-hidden="true">Website<input tabIndex={-1} autoComplete="off" value={data.website ?? ""} onChange={(event) => set("website", event.target.value)} /></label></section>}
+
+      {step === 6 && <section><h1 ref={heading} tabIndex={-1} className="text-3xl font-bold focus:outline-none">Revise sua solicitação</h1><p className="mt-2 text-muted">Você pode voltar a qualquer etapa sem perder os dados.</p><div className="mt-7 grid gap-4 md:grid-cols-2">{[["Solução", data.service ? labels[data.service] : "—", 1], ["Imóvel", `${data.propertyType} • ${data.purpose}`, 2], ["Local", `${data.city} — Paraná`, 2], ["Detalhes", Object.values(data.projectDetails).filter(Boolean).join(" • ") || "Sem detalhes adicionais", 3], ["Anexos", `${data.attachments.length} arquivo(s)`, 4], ["Contato", `${data.customer.name} • ${data.preferredContactMethod}`, 5]].map(([title, value, targetStep]) => <div key={title as string} className="rounded-2xl bg-warm p-5"><div className="flex items-center justify-between"><h2 className="font-bold">{title as string}</h2><button type="button" className="text-sm font-bold text-forest underline" onClick={() => setStep(targetStep as number)}>Editar</button></div><p className="mt-2 break-words text-sm leading-6 text-muted">{value as string}</p></div>)}</div>{status === "error" && <p role="alert" className="mt-5 rounded-xl bg-red-50 p-4 text-sm font-bold text-red-700">{submitError}</p>}<div className="mt-6 rounded-2xl border border-forest/25 bg-forest-pale p-4 text-sm leading-6"><strong>Envio seguro:</strong> o protocolo será criado pelo banco somente após a solicitação ser registrada. Anexos ficam privados.</div></section>}
+
+      <div className="mt-9 flex flex-col-reverse gap-3 border-t pt-6 sm:flex-row sm:justify-between">{step > 1 ? <button type="button" onClick={() => setStep((current) => current - 1)} className="btn-secondary"><ArrowLeft className="size-4" />Voltar</button> : <span />}{step < 6 ? <button type="button" onClick={next} className="btn-primary">Continuar <ArrowRight className="size-4" /></button> : <button type="button" onClick={submit} disabled={status === "loading" || !idempotencyKey} className="btn-primary disabled:opacity-60">{status === "loading" ? <><LoaderCircle className="size-4 animate-spin" />Enviando</> : <>Enviar solicitação <ArrowRight className="size-4" /></>}</button>}</div>
+    </div>
+  </div>;
 }

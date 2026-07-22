@@ -1,21 +1,12 @@
 import Link from "next/link";
 import { Facebook, Instagram, Linkedin, Mail, MapPin, Phone } from "lucide-react";
 import { company } from "@/config/company";
-import { services } from "@/data/services";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 export function SiteFooter() {
-  return <footer className="bg-[#0d2f29] text-white">
-    <div className="container-site grid gap-10 py-16 md:grid-cols-2 lg:grid-cols-4">
-      <div>
-        <Link href="/" className="flex items-center gap-3" aria-label="Micronativa — página inicial"><img src="/images/brand/micronativa-logo.jpg" alt="" aria-hidden="true" className="size-14 rounded-full border border-white/20 bg-white object-cover shadow-md"/><span className="text-xl font-extrabold tracking-[-.02em]">MICRONATIVA</span></Link>
-        <p className="mt-5 max-w-sm text-sm leading-6 text-white/70">Soluções integradas em energia, segurança e automação para imóveis mais eficientes, protegidos e inteligentes.</p>
-        <WhatsAppButton context="home" variant="secondary" label="Chamar no WhatsApp" className="mt-6 border-white/20 bg-white/10 text-white hover:bg-white hover:text-forest" />
-      </div>
-      <div><h2 className="font-bold">Soluções</h2><ul className="mt-4 space-y-3 text-sm text-white/70">{services.map((s) => <li key={s.slug}><Link className="hover:text-white" href={"/" + s.slug}>{s.title}</Link></li>)}</ul></div>
-      <div><h2 className="font-bold">Navegação</h2><ul className="mt-4 space-y-3 text-sm text-white/70"><li><Link href="/sobre">Sobre a empresa</Link></li><li><Link href="/contato">Contato</Link></li><li><Link href="/politica-de-privacidade">Política de Privacidade</Link></li></ul></div>
-      <div><h2 className="font-bold">Contato</h2><ul className="mt-4 space-y-4 text-sm text-white/70"><li className="flex gap-3"><Phone className="size-5 shrink-0 text-solar" />{company.phoneDisplay}</li><li className="flex gap-3"><Mail className="size-5 shrink-0 text-solar" />{company.email}</li><li className="flex gap-3"><MapPin className="size-5 shrink-0 text-solar" />{company.serviceArea}</li></ul><div className="mt-5 flex gap-3"><a aria-label="Instagram" href={company.socials.instagram}><Instagram /></a><a aria-label="Facebook" href={company.socials.facebook}><Facebook /></a><a aria-label="LinkedIn" href={company.socials.linkedin}><Linkedin /></a></div></div>
-    </div>
-    <div className="border-t border-white/10"><div className="container-site flex flex-col gap-3 py-6 text-xs text-white/60 sm:flex-row sm:justify-between"><p>© {new Date().getFullYear()} Micronativa. Todos os direitos reservados.</p><p>Dados de contato demonstrativos — substituir antes da divulgação.</p></div></div>
+  return <footer className="bg-navy text-white"><div className="container-site grid gap-12 py-16 lg:grid-cols-[1.2fr_.8fr_1fr]"><div><Link href="/" className="inline-flex items-center gap-3"><img src="/images/brand/micronativa-logo.jpg" alt="" className="size-14 rounded-2xl object-cover" /><span className="font-extrabold tracking-wide">MICRONATIVA</span></Link><p className="mt-5 max-w-md text-sm leading-7 text-white/70">Soluções integradas em energia solar, segurança eletrônica, automação e controle de acesso em todo o Paraná.</p><WhatsAppButton context="home" variant="secondary" label="Chamar no WhatsApp" className="mt-6 border-white/20 bg-white/10 text-white hover:bg-white hover:text-forest" /></div>
+    <div><h2 className="font-bold">Navegação</h2><ul className="mt-4 space-y-3 text-sm text-white/70"><li><Link href="/sobre" className="hover:text-white">Sobre a empresa</Link></li><li><Link href="/contato" className="hover:text-white">Contato</Link></li><li><Link href="/consultar-protocolo" className="hover:text-white">Acompanhar solicitação</Link></li><li><Link href="/politica-de-privacidade" className="hover:text-white">Política de Privacidade</Link></li></ul></div>
+    <div><h2 className="font-bold">Contato</h2><ul className="mt-4 space-y-4 text-sm text-white/70"><li><a className="flex gap-3 hover:text-white" href={`tel:${company.phoneHref}`}><Phone className="size-5 shrink-0 text-solar" />{company.phoneDisplay}</a></li><li><a className="flex gap-3 break-all hover:text-white" href={`mailto:${company.email}`}><Mail className="size-5 shrink-0 text-solar" />{company.email}</a></li><li className="flex gap-3"><MapPin className="size-5 shrink-0 text-solar" /><span>{company.address}<br />{company.serviceArea}</span></li></ul><div className="mt-5 flex gap-3"><a aria-label="Instagram" href={company.socials.instagram}><Instagram /></a><a aria-label="Facebook" href={company.socials.facebook}><Facebook /></a><a aria-label="LinkedIn" href={company.socials.linkedin}><Linkedin /></a></div></div></div>
+    <div className="border-t border-white/10"><div className="container-site flex flex-col gap-3 py-6 text-xs text-white/60 sm:flex-row sm:justify-between"><p>© {new Date().getFullYear()} Micronativa. Todos os direitos reservados.</p><p>Atendimento em todo o estado do Paraná.</p></div></div>
   </footer>;
 }

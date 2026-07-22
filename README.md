@@ -1,57 +1,149 @@
-# Micronativa ? site institucional
+# Micronativa — site institucional e atendimento
 
-Site institucional em Next.js App Router, TypeScript e Tailwind CSS para energia solar, CFTV, automa??o de port?es e controle de acesso.
+Aplicação institucional da Micronativa em Next.js/Vinext, React, TypeScript e Tailwind CSS. O projeto preserva o site público existente e acrescenta solicitações de orçamento persistidas no Supabase, protocolos gerados pelo PostgreSQL, anexos privados, consulta pública protegida e área administrativa.
 
-## Executar localmente
+## Requisitos
 
-1. Instale Node.js 20 ou superior.
-2. Execute `npm install`.
-3. Inicie com `npm run dev`.
-4. Acesse `http://localhost:3000`.
+- Node.js 20 ou superior
+- pnpm 10
+- Supabase CLI para aplicar migrations
+- Um projeto Supabase existente (não é necessário criar outro)
 
-Valida??o de tipos: `npm run typecheck`  
-Build de produ??o: `npm run build`  
-Servidor do build: `npm start`
+Instalação e execução local:
 
-## Conte?do edit?vel
+```bash
+pnpm install --frozen-lockfile
+pnpm dev
+```
 
-- Empresa, telefone, WhatsApp, e-mail, endere?o, ?rea atendida e redes: `src/config/company.ts`
-- Servi?os e conte?do das p?ginas: `src/data/services.ts`
-- Projetos e estudos de caso: `src/data/projects.ts`
-- Imagens do portf?lio: `public/projects/`
-- Op??es e limites do or?amento: `src/features/quote-request/data/quoteOptions.ts`
+Verificações:
 
-Todos os contatos, n?meros, depoimentos, estat?sticas, certifica??es e casos atuais s?o placeholders claramente identificados. Substitua-os por dados reais e autorizados antes da divulga??o.
+```bash
+pnpm typecheck
+pnpm test
+pnpm build
+```
 
-## Formul?rios e backend
+## Variáveis de ambiente
 
-A primeira fase usa um adaptador demonstrativo em `src/services/quoteRequestService.ts`. Ele n?o armazena dados. Para produ??o, substitua-o por uma API REST ou Server Action e implemente:
+Copie `.env.example` para `.env.local` e configure:
 
-- valida??o equivalente no servidor;
-- banco de dados e/ou envio transacional de e-mail;
-- integra??o com CRM, se desejada;
-- rate limiting, antispam e sanitiza??o;
-- armazenamento privado de anexos;
-- logs sem dados pessoais sens?veis.
+```env
+NEXT_PUBLIC_SITE_URL=https://seu-dominio.com.br
+NEXT_PUBLIC_SUPABASE_URL=https://seu-projeto.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxx
+SUPABASE_SECRET_KEY=sb_secret_xxx
+NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY=
+```
 
-O formul?rio de contato tamb?m est? explicitamente marcado como demonstrativo.
+Projetos Supabase que ainda utilizam as chaves legadas também são aceitos por meio de `NEXT_PUBLIC_SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY`. Prefira as chaves publishable e secret atuais.
 
-## WhatsApp e analytics
+Somente as variáveis iniciadas por `NEXT_PUBLIC_` podem chegar ao navegador. `SUPABASE_SECRET_KEY` ou `SUPABASE_SERVICE_ROLE_KEY` são exclusivamente de servidor e nunca devem ser commitidas. `.env.local` já está ignorado pelo Git.
 
-Mensagens contextuais e URLs ficam em `src/lib/whatsapp.ts`. O n?mero vem do arquivo central da empresa. Eventos an?nimos passam por `src/lib/analytics.ts`, pronto para GA, GTM, Meta Pixel ou outro provedor. N?o envie dados pessoais nesses eventos.
+## Banco de dados e migrations
 
-## SEO e privacidade
+Todas as alterações do banco estão versionadas em `supabase/migrations`. Para aplicar no projeto já existente:
 
-Metadados ficam nas pr?prias rotas e no utilit?rio `src/lib/metadata.ts`. Atualize `NEXT_PUBLIC_SITE_URL` e revise o schema LocalBusiness. A pol?tica de privacidade ? um modelo inicial e precisa de revis?o jur?dica.
+```bash
+pnpm dlx supabase login
+pnpm dlx supabase link --project-ref SEU_PROJECT_REF
+pnpm dlx supabase db push
+```
 
-## Deploy na Vercel
+As migrations criam:
 
-1. Envie o reposit?rio a um provedor Git.
-2. Importe o projeto na Vercel.
-3. Configure `NEXT_PUBLIC_SITE_URL` com o dom?nio final.
-4. Use `npm run build` como comando de build.
-5. Revise os placeholders antes de publicar.
+- `quote_requests`: solicitações, dados normalizados, idempotência e protocolo;
+- `quote_request_status_history`: histórico público seguro de mudanças de status;
+- `quote_request_notes`: notas internas dos administradores;
+- `quote_request_attachments`: metadados dos anexos privados;
+- `admin_users`: autorização administrativa vinculada ao Supabase Auth;
+- bucket privado `quote-attachments` no Supabase Storage.
 
-## Extens?es futuras
+O protocolo é criado atomicamente no PostgreSQL no formato `MN-AAAA-000001`. A parte numérica usa uma identidade monotônica, portanto não depende de contagem de linhas e não é reutilizada após exclusão. O protocolo definitivo só é devolvido ao navegador depois que a solicitação e seus anexos são confirmados.
 
-A arquitetura separa conte?do, configura??o, analytics, WhatsApp e submiss?o. Assim, pode receber futuramente CMS, CRM, banco de dados, arquivos em nuvem, agendamento, simulador solar, portal do cliente, PWA e chamados de manuten??o sem reescrever a interface atual. Nenhum desses recursos futuros aparece como bot?o inacabado.
+## Segurança, RLS e Storage
+
+Todas as tabelas do schema `public` têm Row Level Security habilitado. Usuários anônimos não recebem permissão para listar solicitações, históricos, notas, anexos ou administradores. A submissão pública e a consulta de protocolo passam por Route Handlers validados no servidor.
+
+Administradores precisam de uma sessão válida do Supabase Auth e de um registro ativo em `admin_users`. Os anexos ficam em bucket privado; somente a área administrativa pode solicitar URLs assinadas de curta duração. A consulta pública nunca retorna dados pessoais completos, notas internas, IDs ou URLs de anexos.
+
+O limitador incluído é uma proteção local por instância e oferece um ponto de integração. Em produção distribuída, configure um armazenamento compartilhado de rate limit, como Redis ou serviço equivalente; não trate memória local como limitação global.
+
+Após aplicar migrations, execute os Security e Performance Advisors no painel Supabase. Avisos relevantes de segurança devem ser resolvidos antes de cada publicação.
+
+## Criar o primeiro administrador com segurança
+
+Não existe senha padrão no repositório.
+
+1. No painel Supabase, abra **Authentication → Users** e crie o usuário com e-mail e uma senha forte.
+2. Copie o UUID desse usuário.
+3. No SQL Editor, execute, substituindo o UUID:
+
+```sql
+insert into public.admin_users (user_id, role, active)
+values ('UUID_DO_USUARIO', 'administrador', true);
+```
+
+4. Acesse `/admin/login` e autentique-se.
+
+Papéis disponíveis: `administrador`, `comercial` e `tecnico`. Somente `administrador` pode arquivar uma solicitação. A autorização usa a tabela controlada pelo servidor, não `user_metadata` editável pelo cliente.
+
+## Solicitações e protocolos
+
+O formulário público envia dados e arquivos para `/api/quote-requests`, onde eles são novamente validados e normalizados. Há consentimento LGPD obrigatório, honeypot, token de idempotência e prevenção de duplo envio. São aceitos até seis arquivos JPG, JPEG, PNG, WEBP ou PDF, com até 8 MB cada.
+
+Depois da confirmação no banco, a tela de sucesso exibe o protocolo real, data, serviço e atalhos para acompanhamento e WhatsApp.
+
+Em `/consultar-protocolo`, o cliente informa protocolo e e-mail. A comparação ocorre no servidor com valores normalizados e resposta genérica em caso de erro. A resposta contém apenas serviço, datas, status público e mensagens públicas do histórico.
+
+## Área administrativa
+
+As rotas `/admin`, `/admin/solicitacoes` e `/admin/solicitacoes/[id]` são protegidas no servidor e não aparecem na navegação pública. A área oferece dashboard, filtros e paginação no servidor, visualização responsiva, mudança validada de status, histórico, notas internas e downloads por URL assinada.
+
+Status disponíveis: Recebido, Em análise, Contato realizado, Aguardando cliente, Visita agendada, Proposta enviada, Em execução, Concluído e Cancelado.
+
+Cada alteração cria uma linha de histórico com o administrador responsável. Mensagens públicas e notas internas são armazenadas separadamente.
+
+## Google Maps
+
+Sem `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY`, a página de contato mostra um cartão de localização completo com links seguros para o Google Maps, sem iframe quebrado.
+
+Para habilitar o mapa interativo:
+
+1. Ative a **Maps Embed API** no Google Cloud.
+2. Crie uma chave de API.
+3. Restrinja a chave por **HTTP referrer** aos domínios de produção e desenvolvimento necessários.
+4. Restrinja a chave à **Maps Embed API**.
+5. Configure `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY` no ambiente de deploy.
+
+Não coloque a chave diretamente no código.
+
+## Deploy
+
+O build mantém a compatibilidade com Vinext/Sites: páginas públicas estáticas são servidas rapidamente e rotas dinâmicas de API/admin são encaminhadas ao runtime do servidor.
+
+Antes do deploy:
+
+1. Aplique todas as migrations no projeto Supabase correto.
+2. Configure todas as variáveis de ambiente no provedor, incluindo a chave secreta somente no servidor.
+3. Crie ao menos um administrador.
+4. Execute `pnpm typecheck`, `pnpm test` e `pnpm build`.
+5. Valide uma submissão, consulta, mudança de status, nota e anexo em ambiente de homologação.
+
+Em hospedagens Node.js convencionais, use o comando de build do provedor e disponibilize as variáveis no processo do servidor. Hospedagem puramente estática não suporta as Route Handlers e a área administrativa desta aplicação.
+
+## Estrutura principal
+
+- `src/config/company.ts`: dados centralizados da empresa;
+- `src/config/quoteStatuses.ts`: status, rótulos, cores e transições;
+- `src/lib/supabase/`: clientes de navegador, servidor e servidor privilegiado;
+- `src/lib/validation/`: validação tipada de dados e anexos;
+- `src/app/api/`: submissão, consulta e ações administrativas;
+- `src/app/admin/`: login, dashboard, listagem e detalhes;
+- `src/app/consultar-protocolo/`: acompanhamento público;
+- `supabase/migrations/`: schema, RLS, funções e Storage versionados;
+- `src/types/database.ts`: tipos gerados do banco Supabase.
+
+## Privacidade
+
+Não envie dados pessoais para analytics ou logs de cliente. Revise a política de privacidade e os processos internos de retenção antes da operação definitiva. Alterações no tratamento de dados, contatos ou área atendida devem ser centralizadas nas configurações e documentadas.

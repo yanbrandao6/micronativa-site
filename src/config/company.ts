@@ -1,2 +1,17 @@
-export const company={name:"Micronativa",legalName:"Micronativa Tecnologia e Infraestrutura",phoneDisplay:"(41) 99700-4221",phoneHref:"+5541997004221",whatsapp:"5541997004221",email:"contato@exemplo.com.br",address:"Endereço a confirmar",city:"Cidade",state:"UF",serviceArea:"Atendimento regional — cidades a confirmar",hours:"Segunda a sexta, das 8h às 18h",siteUrl:process.env.NEXT_PUBLIC_SITE_URL??"https://exemplo.com.br",socials:{instagram:"#",facebook:"#",linkedin:"#"}} as const;
-// TODO: substitua todos os dados demonstrativos acima antes da publicação.
+export const company = {
+  name: "Micronativa",
+  legalName: "Micronativa",
+  phoneDisplay: "(41) 3094-5450",
+  phoneHref: "+554130945450",
+  whatsapp: "5541997004221",
+  email: "micronativa@micronativa.com.br",
+  address: "Rodovia BR-116, Linha Verde, Nº 15338 - Xaxim, Curitiba - PR, 81690-200",
+  city: "Curitiba",
+  state: "PR",
+  postalCode: "81690-200",
+  country: "BR",
+  serviceArea: "Atendimento em todo o estado do Paraná",
+  hours: "Segunda a sexta, das 8h às 18h",
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://micronativa-solucoes.yan-brandao995387.chatgpt.site",
+  socials: { instagram: "#", facebook: "#", linkedin: "#" },
+} as const;
