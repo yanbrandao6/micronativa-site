@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const core = readFileSync(resolve(process.cwd(), "supabase/migrations/20260722054939_create_quote_request_platform.sql"), "utf8");
-const security = readFileSync(resolve(process.cwd(), "supabase/migrations/20260722054947_configure_rls_and_storage.sql"), "utf8");
+const core = readFileSync(resolve(process.cwd(), "supabase/migrations/20260722055240_create_quote_request_platform.sql"), "utf8");
+const security = readFileSync(resolve(process.cwd(), "supabase/migrations/20260722055243_configure_rls_and_storage.sql"), "utf8");
 
 describe("garantias das migrações", () => {
   it("gera protocolos por identidade e trigger, sem contar linhas", () => {
