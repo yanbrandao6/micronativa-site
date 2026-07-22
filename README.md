@@ -122,6 +122,19 @@ Não coloque a chave diretamente no código.
 
 O build mantém a compatibilidade com Vinext/Sites: páginas públicas estáticas são servidas rapidamente e rotas dinâmicas de API/admin são encaminhadas ao runtime do servidor.
 
+### Preview na Vercel
+
+O repositório também está preparado para um deploy nativo do Next.js na Vercel. O arquivo `vercel.json` seleciona o framework Next.js e executa `pnpm run build:vercel`, sem alterar o comando `pnpm build` usado pelo empacotamento Vinext/Sites.
+
+1. Importe o repositório `yanbrandao6/micronativa-site` no painel da Vercel.
+2. Mantenha o diretório raiz como `.` e o preset de framework como **Next.js**.
+3. Em **Environment Variables**, cadastre todas as variáveis de `.env.example` nos ambientes **Production** e **Preview**.
+4. Nunca copie o arquivo `.env.local` para o GitHub. Cadastre `SUPABASE_SECRET_KEY` somente no painel da Vercel.
+5. Faça o primeiro deploy e copie a URL `https://...vercel.app` gerada.
+6. Atualize `NEXT_PUBLIC_SITE_URL` com essa URL e solicite um novo deploy para corrigir metadados, sitemap e links absolutos.
+
+O mapa funciona com o cartão de fallback quando `NEXT_PUBLIC_GOOGLE_MAPS_EMBED_KEY` não estiver configurada. Para habilitar o iframe, cadastre a chave na Vercel e restrinja-a também ao domínio `*.vercel.app` usado na demonstração.
+
 Antes do deploy:
 
 1. Aplique todas as migrations no projeto Supabase correto.
