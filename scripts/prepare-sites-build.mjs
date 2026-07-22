@@ -28,6 +28,9 @@ const pageRoutes = [
   "/contato",
   "/politica-de-privacidade",
   "/orcamento",
+  "/consultar-protocolo",
+  "/admin/login",
+  "/admin/acesso-negado",
 ];
 
 const navigationGuard = String.raw`<script>document.addEventListener("click",function(event){var anchor=event.target.closest&&event.target.closest("a[href]");if(!anchor||event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey||anchor.target==="_blank"||anchor.hasAttribute("download"))return;var href=anchor.getAttribute("href");if(!href||href.charAt(0)==="#")return;var target=new URL(anchor.href,location.href);if(target.origin!==location.origin)return;if(target.pathname===location.pathname&&target.search===location.search&&target.hash)return;event.preventDefault();event.stopImmediatePropagation();location.assign(target.href)},true)</script>`;
@@ -54,12 +57,19 @@ const notFoundResponse = await fetchHandler(new Request("http://localhost/pagina
 let notFoundBody = await notFoundResponse.text();
 notFoundBody = notFoundBody.replace("</body>", `${navigationGuard}</body>`);
 
-const workerSource = `import runtime from "./server/index.js";\nconst responses=${JSON.stringify(responses)};\nconst fallback=${JSON.stringify({
+const workerSource = `const responses=${JSON.stringify(responses)};\nconst fallback=${JSON.stringify({
   body: notFoundBody,
   contentType: "text/html; charset=utf-8",
   status: 404,
-})};\nconst dynamicFetch=runtime.fetch?.bind(runtime)??runtime;\nexport default {async fetch(request,env,ctx){const url=new URL(request.url);const path=url.pathname!=="/"?url.pathname.replace(/\\/$/,""):"/";const item=responses[path];if((request.method==="GET"||request.method==="HEAD")&&item){const headers=new Headers({"content-type":item.contentType,"x-content-type-options":"nosniff","cache-control":"public, max-age=60"});return request.method==="HEAD"?new Response(null,{status:item.status,headers}):new Response(item.body,{status:item.status,headers})}return dynamicFetch(request,env,ctx)}};\n`;
+})};\nlet dynamicFetchPromise;\nfunction getDynamicFetch(){return dynamicFetchPromise??=import("./server/index.js").then(module=>{const runtime=module.default;return runtime.fetch?.bind(runtime)??runtime})}\nexport default {async fetch(request,env,ctx){const url=new URL(request.url);const path=url.pathname!=="/"?url.pathname.replace(/\\/$/,""):"/";const item=responses[path];if((request.method==="GET"||request.method==="HEAD")&&item){const headers=new Headers({"content-type":item.contentType,"x-content-type-options":"nosniff","cache-control":"public, max-age=60"});return request.method==="HEAD"?new Response(null,{status:item.status,headers}):new Response(item.body,{status:item.status,headers})}const dynamicFetch=await getDynamicFetch();return dynamicFetch(request,env,ctx)}};\n`;
 
 writeFileSync("dist/index.js", workerSource, "utf8");
+writeFileSync("dist/wrangler.jsonc", JSON.stringify({
+  name: "micronativa-site",
+  compatibility_date: "2026-07-22",
+  compatibility_flags: ["nodejs_compat"],
+  main: "index.js",
+  assets: { directory: "client", not_found_handling: "none", binding: "ASSETS" },
+}, null, 2), "utf8");
 mkdirSync("dist/.openai", { recursive: true });
 cpSync(".openai/hosting.json", "dist/.openai/hosting.json");
