@@ -24,10 +24,11 @@ describe("validação do formulário", () => {
     expect(result.customer.email).toBe("cliente@exemplo.com");
   });
 
-  it("rejeita ausência de consentimento, HTML e estado fora do Paraná", () => {
+  it("aceita Paraná e Santa Catarina e rejeita estados fora da área atendida", () => {
     expect(quoteRequestPayloadSchema.safeParse({ ...validPayload, privacyConsent: false }).success).toBe(false);
     expect(quoteRequestPayloadSchema.safeParse({ ...validPayload, city: "<b>Curitiba</b>" }).success).toBe(false);
-    expect(quoteRequestPayloadSchema.safeParse({ ...validPayload, state: "SC" }).success).toBe(false);
+    expect(quoteRequestPayloadSchema.safeParse({ ...validPayload, state: "SC" }).success).toBe(true);
+    expect(quoteRequestPayloadSchema.safeParse({ ...validPayload, state: "SP" }).success).toBe(false);
   });
 });
 

@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     property_type: payload.propertyType,
     purpose: payload.purpose,
     city: payload.city,
-    state: "PR",
+    state: payload.state,
     project_details: projectDetails,
     customer_name: payload.customer.name,
     customer_phone: payload.customer.phone,

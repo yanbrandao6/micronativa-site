@@ -10,7 +10,7 @@ export const company = {
   state: "PR",
   postalCode: "81690-200",
   country: "BR",
-  serviceArea: "Atendimento em todo o estado do Paraná",
+  serviceArea: "Atendimento no Paraná e em Santa Catarina",
   hours: "Segunda a sexta, das 8h às 18h",
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://micronativa-solucoes.yan-brandao995387.chatgpt.site",
   socials: { instagram: "#", facebook: "#", linkedin: "#" },

@@ -6,7 +6,7 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { company } from "@/config/company";
 import { pageMetadata } from "@/lib/metadata";
 
-export const metadata = pageMetadata("Contato", "Fale com a Micronativa sobre energia solar, segurança, controle de acesso e automação no Paraná.", "/contato");
+export const metadata = pageMetadata("Contato", "Fale com a Micronativa sobre energia solar, segurança, controle de acesso e automação no Paraná e em Santa Catarina.", "/contato");
 
 export default function Page() {
   return <><section className="bg-white"><div className="container-site py-10"><Breadcrumbs items={[{ label: "Contato" }]} /><div className="max-w-4xl py-16"><p className="eyebrow">Vamos conversar</p><h1 className="display-title mt-5">Conte o que seu imóvel precisa.</h1><p className="body-large mt-6">Use o formulário para uma mensagem breve ou abra o orçamento em etapas para enviar informações técnicas e anexos.</p></div></div></section>

@@ -9,7 +9,7 @@ const manrope = Manrope({ subsets: ["latin"], display: "swap" });
 export const metadata: Metadata = {
   metadataBase: new URL(company.siteUrl),
   title: { default: "Micronativa | Energia, Segurança e Automação", template: "%s | Micronativa" },
-  description: "Soluções integradas em energia solar, CFTV, automação de portões e controle de acesso no Paraná.",
+  description: "Soluções integradas em energia solar, CFTV, automação de portões e controle de acesso no Paraná e em Santa Catarina.",
   icons: { icon: "/images/brand/micronativa-logo.jpg", apple: "/images/brand/micronativa-logo.jpg" },
 };
 
@@ -20,7 +20,10 @@ const localBusiness = {
   url: company.siteUrl,
   telephone: company.phoneHref,
   email: company.email,
-  areaServed: { "@type": "AdministrativeArea", name: "Paraná" },
+  areaServed: [
+    { "@type": "AdministrativeArea", name: "Paraná" },
+    { "@type": "AdministrativeArea", name: "Santa Catarina" },
+  ],
   address: {
     "@type": "PostalAddress",
     streetAddress: company.address,

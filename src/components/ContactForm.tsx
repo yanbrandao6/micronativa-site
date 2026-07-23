@@ -6,16 +6,18 @@ import { useEffect, useState } from "react";
 import { SelectField } from "@/components/forms/SelectField";
 import { quoteServiceOptions } from "@/config/quoteServices";
 import { formatPhone } from "@/features/quote-request/utils/format";
-import type { ContactMethod, PropertyType, QuoteRequest, QuoteService, QuoteSubmissionResult } from "@/features/quote-request/types/quoteRequest";
+import type { ContactMethod, PropertyType, QuoteRequest, QuoteService, QuoteState, QuoteSubmissionResult } from "@/features/quote-request/types/quoteRequest";
 import { submitQuoteRequest } from "@/services/quoteRequestService";
 
 const propertyOptions: PropertyType[] = ["Residência", "Comércio", "Empresa", "Condomínio", "Indústria", "Propriedade rural", "Outro"];
 const contactOptions: ContactMethod[] = ["WhatsApp", "Telefone", "E-mail"];
+const stateOptions: Array<{ value: QuoteState; label: string }> = [{ value: "PR", label: "Paraná" }, { value: "SC", label: "Santa Catarina" }];
 
 export function ContactForm() {
   const [service, setService] = useState<QuoteService>("energia-solar");
   const [propertyType, setPropertyType] = useState<PropertyType>("Residência");
   const [contactMethod, setContactMethod] = useState<ContactMethod>("WhatsApp");
+  const [state, setState] = useState<QuoteState>("PR");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [error, setError] = useState("");
   const [result, setResult] = useState<QuoteSubmissionResult | null>(null);
@@ -43,7 +45,7 @@ export function ContactForm() {
       propertyType,
       purpose: "Avaliação técnica",
       city,
-      state: "PR",
+      state,
       projectDetails: { message },
       attachments: [],
       customer: { name, phone, whatsapp: phone, email },
@@ -68,10 +70,11 @@ export function ContactForm() {
     <label className="font-bold">Nome<input name="name" className="input mt-2" maxLength={160} autoComplete="name" required /></label>
     <label className="font-bold">Telefone ou WhatsApp<input name="phone" type="tel" inputMode="tel" className="input mt-2" autoComplete="tel" onChange={(event) => { event.currentTarget.value = formatPhone(event.currentTarget.value); }} required /></label>
     <label className="font-bold">E-mail<input name="email" type="email" inputMode="email" className="input mt-2" maxLength={254} autoComplete="email" required /></label>
-    <label className="font-bold">Cidade<input name="city" className="input mt-2" maxLength={120} autoComplete="address-level2" required /><span className="mt-2 block text-xs font-normal text-muted">Atendimento em todo o estado do Paraná.</span></label>
+    <label className="font-bold">Cidade<input name="city" className="input mt-2" maxLength={120} autoComplete="address-level2" required /></label>
+    <SelectField id="contact-state" label="Estado" value={state} onValueChange={(value) => setState(value as QuoteState)} options={stateOptions} helperText="Atendimento no Paraná e em Santa Catarina." />
     <SelectField id="contact-property" label="Tipo de cliente" value={propertyType} onValueChange={(value) => setPropertyType(value as PropertyType)} options={propertyOptions.map((value) => ({ value, label: value }))} />
     <SelectField id="contact-service" label="Serviço de interesse" value={service} onValueChange={(value) => setService(value as QuoteService)} options={quoteServiceOptions} />
-    <SelectField id="contact-method" className="sm:col-span-2" label="Forma de contato preferida" value={contactMethod} onValueChange={(value) => setContactMethod(value as ContactMethod)} options={contactOptions.map((value) => ({ value, label: value }))} />
+    <SelectField id="contact-method" label="Forma de contato preferida" value={contactMethod} onValueChange={(value) => setContactMethod(value as ContactMethod)} options={contactOptions.map((value) => ({ value, label: value }))} />
     <label className="font-bold sm:col-span-2">Mensagem<textarea name="message" className="input mt-2 min-h-36 resize-y" maxLength={2000} /></label>
     <label className="flex items-start gap-3 rounded-2xl bg-warm p-4 sm:col-span-2"><input name="consent" type="checkbox" className="mt-1 size-5" required /><span className="text-sm leading-6">Autorizo o tratamento dos meus dados para este atendimento, conforme a <Link href="/politica-de-privacidade" className="font-bold text-forest underline">Política de Privacidade</Link>.</span></label>
     <label className="absolute -left-[10000px] size-px overflow-hidden" aria-hidden="true">Website<input name="website" tabIndex={-1} autoComplete="off" /></label>

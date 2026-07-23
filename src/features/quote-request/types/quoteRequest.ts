@@ -2,6 +2,7 @@ export type QuoteService = "energia-solar" | "cftv-seguranca" | "automacao-porto
 export type PropertyType = "Residência" | "Comércio" | "Empresa" | "Condomínio" | "Indústria" | "Propriedade rural" | "Outro";
 export type ProjectPurpose = "Nova instalação" | "Ampliação" | "Substituição" | "Manutenção" | "Avaliação técnica";
 export type ContactMethod = "WhatsApp" | "Telefone" | "E-mail";
+export type QuoteState = "PR" | "SC";
 
 export interface QuoteAttachment {
   id: string;
@@ -24,7 +25,7 @@ export interface QuoteRequest {
   propertyType: PropertyType | "";
   purpose: ProjectPurpose | "";
   city: string;
-  state: "PR";
+  state: QuoteState;
   projectDetails: Record<string, string | boolean>;
   attachments: QuoteAttachment[];
   customer: CustomerContact;

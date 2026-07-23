@@ -18,7 +18,7 @@ export const quoteRequestPayloadSchema = z.object({
   propertyType: plainText(2, 80),
   purpose: plainText(2, 80),
   city: plainText(2, 120),
-  state: z.literal("PR"),
+  state: z.enum(["PR", "SC"]),
   projectDetails: z.record(z.string().max(80), z.union([z.string().max(2000), z.boolean()])).default({}),
   customer: z.object({
     name: plainText(3, 160),
