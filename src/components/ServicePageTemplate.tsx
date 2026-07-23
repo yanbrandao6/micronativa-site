@@ -102,30 +102,47 @@ export function ServicePageTemplate({ service }: { service: Service }) {
         </div>
       </section>
 
-      <section className="section-pad">
+      <section id="como-funciona" className="section-pad scroll-mt-24 bg-warm">
         <div className="container-site">
-          <SectionHeading eyebrow="Aplicações" title="Projetos para diferentes perfis" />
-          <div className="mt-10 flex flex-wrap gap-3">
-            {service.segments.map((segment) => (
-              <span key={segment} className="rounded-full border bg-white px-5 py-3 font-bold text-navy">{segment}</span>
-            ))}
-          </div>
-        </div>
-      </section>
+          <div className="overflow-hidden rounded-4xl border border-navy/10 bg-white shadow-soft">
+            <div className="grid lg:grid-cols-[.82fr_1.18fr]">
+              <div className="bg-navy p-7 text-white sm:p-10 lg:p-12">
+                <p className="eyebrow !text-solar">Aplicações</p>
+                <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">Onde essa solução faz sentido</h2>
+                <p className="mt-5 max-w-xl leading-7 text-white/70">Planejamos {service.title.toLowerCase()} conforme o perfil do imóvel, o fluxo de uso e a infraestrutura disponível.</p>
+                <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                  {service.segments.map((segment) => (
+                    <li key={segment} className="flex min-h-14 items-center gap-3 rounded-2xl border border-white/10 bg-white/[.06] px-4 py-3 font-bold text-white/90">
+                      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-solar text-navy"><Check className="size-4" /></span>
+                      {segment}
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
-      <section id="como-funciona" className="section-pad bg-white">
-        <div className="container-site">
-          <SectionHeading eyebrow="Execução" title="Como conduzimos a instalação" />
-          <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {executionSteps.map(([Icon, title, description]) => (
-              <article key={title} className="rounded-3xl border bg-warm p-6 shadow-sm">
-                <span className="grid size-12 place-items-center rounded-2xl bg-white text-forest shadow-sm">
-                  <Icon className="size-6" />
-                </span>
-                <h3 className="mt-5 text-lg font-bold">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted">{description}</p>
-              </article>
-            ))}
+              <div className="p-7 sm:p-10 lg:p-12">
+                <p className="eyebrow">Execução</p>
+                <h2 className="mt-4 text-3xl font-bold tracking-tight text-navy sm:text-4xl">Como conduzimos a instalação</h2>
+                <p className="mt-5 max-w-2xl leading-7 text-muted">Cada etapa prepara a próxima, mantendo as decisões técnicas, a instalação e o suporte dentro do mesmo processo.</p>
+                <ol className="relative mt-9 space-y-4 before:absolute before:bottom-7 before:left-6 before:top-7 before:w-px before:bg-forest/20">
+                  {executionSteps.map(([Icon, title, description]) => (
+                    <li key={title} className="relative flex gap-4">
+                      <span className="relative z-10 grid size-12 shrink-0 place-items-center rounded-2xl border border-forest/15 bg-forest-pale text-forest shadow-sm">
+                        <Icon className="size-5" />
+                      </span>
+                      <div className="min-w-0 flex-1 rounded-2xl bg-warm px-5 py-4">
+                        <h3 className="font-bold text-navy">{title}</h3>
+                        <p className="mt-1 text-sm leading-6 text-muted">{description}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+            <div className="flex flex-col gap-5 border-t border-forest/10 bg-forest-pale/60 px-7 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-10">
+              <div><p className="font-bold text-navy">Quer avaliar essa solução para o seu imóvel?</p><p className="mt-1 text-sm text-muted">Envie os dados principais e nossa equipe continua o atendimento.</p></div>
+              <Link className="btn-primary shrink-0" href={`/orcamento?service=${service.slug}&source=service`}>Solicitar avaliação <ArrowRight className="size-4" /></Link>
+            </div>
           </div>
         </div>
       </section>

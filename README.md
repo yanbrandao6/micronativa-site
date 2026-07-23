@@ -1,4 +1,4 @@
-# Micronativa — site institucional e atendimento
+# Micronativa: site institucional e atendimento
 
 Aplicação institucional da Micronativa em Next.js/Vinext, React, TypeScript e Tailwind CSS. O projeto preserva o site público existente e acrescenta solicitações de orçamento persistidas no Supabase, protocolos gerados pelo PostgreSQL, anexos privados, consulta pública protegida e área administrativa.
 

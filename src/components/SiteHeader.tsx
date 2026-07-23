@@ -10,8 +10,8 @@ export function SiteHeader() {
   return <header className="sticky top-0 z-50 border-b border-navy/10 bg-warm/95 backdrop-blur">
     <a href="#conteudo" className="absolute -top-20 left-4 z-[60] rounded-lg bg-navy px-4 py-3 text-white focus:top-3">Pular para o conteúdo</a>
     <div className="container-site flex min-h-20 items-center justify-between gap-6">
-      <Link href="/" className="flex items-center gap-3" aria-label="Micronativa — página inicial">
-        <img src="/images/brand/micronativa-logo.jpg" alt="" aria-hidden="true" className="size-12 rounded-full border border-forest/15 bg-white object-cover shadow-sm" />
+      <Link href="/" className="flex items-center gap-3" aria-label="Micronativa, página inicial">
+        <img src="/images/brand/micronativa-logo-transparent.png" alt="" aria-hidden="true" className="size-12 object-contain drop-shadow-sm" />
         <span className="text-xl font-extrabold tracking-[-.025em] text-navy">MICRO<span className="text-forest">NATIVA</span></span>
       </Link>
       <nav aria-label="Navegação principal" className="hidden items-center gap-1 lg:flex">

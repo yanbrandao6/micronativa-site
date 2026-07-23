@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(company.siteUrl),
   title: { default: "Micronativa | Energia, Segurança e Automação", template: "%s | Micronativa" },
   description: "Soluções integradas em energia solar, CFTV, automação de portões e controle de acesso no Paraná e em Santa Catarina.",
-  icons: { icon: "/images/brand/micronativa-logo.jpg", apple: "/images/brand/micronativa-logo.jpg" },
+  icons: { icon: "/images/brand/micronativa-logo-transparent.png", apple: "/images/brand/micronativa-logo-transparent.png" },
 };
 
 const localBusiness = {

@@ -40,7 +40,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           <div>
             <div className="flex flex-wrap gap-2"><span className="rounded-full bg-forest-pale px-3 py-1 text-xs font-bold text-forest">{project.categoryLabel}</span>{project.isPlaceholder && <span className="rounded-full bg-solar/25 px-3 py-1 text-xs font-bold">Estudo demonstrativo</span>}</div>
             <h1 className="display-title mt-5">{project.title}</h1>
-            <p className="mt-4 flex items-center gap-2 text-sm font-bold text-muted"><MapPin className="size-4" />{project.city} — {project.state} • {project.propertyType}</p>
+            <p className="mt-4 flex items-center gap-2 text-sm font-bold text-muted"><MapPin className="size-4" />{project.city}, {project.state} • {project.propertyType}</p>
             <p className="body-large mt-6">{project.summary}</p>
           </div>
           <div className="relative aspect-[4/3] overflow-hidden rounded-4xl bg-navy-pale shadow-soft"><img src={project.coverImage.src} alt={project.coverImage.alt} className="h-full w-full object-cover" /></div>
